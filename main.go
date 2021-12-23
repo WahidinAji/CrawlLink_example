@@ -1,9 +1,19 @@
 package main
 
+import (
+	"crawl/ssr"
+	"encoding/json"
+	"fmt"
+	"github.com/PuerkitoBio/goquery"
+	"log"
+	"net/http"
+)
+
 type Link struct {
 	url string
 	title string
 }
+
 // TODO: Write your function here
 func CrawlLink(url string) []Link {
 	/**
@@ -160,6 +170,191 @@ func CrawlLink(url string) []Link {
 		{ url: "http://example.org/", title: "Again" },
 	}
 	 */
+
+	res, err := http.Get("https://csr-assessment.miqdadyyy.vercel.app/")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer res.Body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(res.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	rows := []Link{}
+	doc.Find(".navbar").Children().Each(func(i int, sel *goquery.Selection) {
+		row := Link{}
+		row.title = sel.Find(".navbar-brand").Text()
+		row.url, _ = sel.Find(".navbar-brand").Attr("href")
+		rows = append(rows,row)
+	})
+	btw, err := json.MarshalIndent(rows, ""," ")
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Println(string(btw))
 	return nil
 }
 
+type Article struct {
+	URL string
+	Title string
+}
+
+
+func main()  {
+	//Links()
+	Sedikitlagi()
+	//Articles("https://csr-assessment-miqdadyyy.vercel.app")
+	//Finishing("https://csr-assessment-miqdadyyy.vercel.app")/
+
+	//SSR
+	//ssr.FinishingSsr("https://ssr-assessment-miqdadyyy.vercel.app/")
+}
+
+func Finishing(url string)  {
+	doc, err := goquery.NewDocument(url)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var articles []Article
+	doc.Find("body a").Each(func(index int, item *goquery.Selection) {
+
+		var article Article
+		linkTag := item
+		article.URL, _ = item.Attr("href")
+		article.Title = linkTag.Text()
+
+		//var links = []Link{
+		//	{
+		//		url: article.URL,
+		//		title: article.Title,
+		//	},
+		//}
+
+		articles = append(articles, article)
+	})
+	bts, err := json.MarshalIndent(articles, "", "  ")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println(string(bts))
+}
+// sedikit lagi +2
+func Articles(url string)  {
+	doc, err := goquery.NewDocument(url)
+	if err != nil {
+		log.Fatal(err)
+	}
+	articles := make([]Article,0)
+	doc.Find("body a").Each(func(index int, item *goquery.Selection) {
+		article := new(Article)
+		linkTag := item
+		article.URL, _ = item.Attr("href")
+		article.Title = linkTag.Text()
+		articles = append(articles, *article)
+	})
+	bts, err := json.MarshalIndent(articles, "", "  ")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println(string(bts))
+}
+
+
+func linkScrape() {
+	doc, err := goquery.NewDocument("http://jonathanmh.com")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// use CSS selector found with the browser inspector
+	// for each, use index and item
+	doc.Find("body a").Each(func(index int, item *goquery.Selection) {
+		linkTag := item
+		link, _ := linkTag.Attr("href")
+		linkText := linkTag.Text()
+		fmt.Printf("Link #%d: '%s' - '%s'\n", index, linkText, link)
+	})
+}
+
+//type sedikit lagi +1
+func Links()  {
+	doc, err := goquery.NewDocument("https://csr-assessment-miqdadyyy.vercel.app")
+	if err != nil {
+		log.Fatal(err)
+	}
+	var links []Link
+	doc.Find("body a").Each(func(index int, item *goquery.Selection) {
+		var linka Link
+		linkTag := item
+		linka.url, _ = item.Attr("href")
+		linka.title = linkTag.Text()
+		links = append(links, linka)
+
+		link, _ := linkTag.Attr("href")
+		linkText := linkTag.Text()
+		fmt.Printf("Link #%d: '%s' - '%s'\n", index, linkText, link)
+	})
+	//bts, err := json.MarshalIndent(links, "", "  ")
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
+	//json.Marshal(links)
+	fmt.Println(links)
+}
+
+func Sedikitlagi()  {
+	//doc, err := goquery.NewDocument("http://jonathanmh.com")
+	doc, err := goquery.NewDocument("https://csr-assessment-miqdadyyy.vercel.app")
+	if err != nil {
+	log.Fatal(err)
+	}
+	var links []ssr.Link
+	// use CSS selector found with the browser inspector
+	// for each, use index and item
+	doc.Find("body a").Each(func(index int, item *goquery.Selection) {
+		var link ssr.Link
+		//linkTag := item
+		link.Url, _ = item.Attr("href")
+		link.Title = item.Text()
+		//fmt.Printf("Link #%d: '%s' - '%s'\n", index, link.url,link.title, link)
+		links = append(links, link)
+	})
+	bts, err := json.MarshalIndent(links, "", "  ")
+	if err != nil {
+	log.Fatal(err)
+	}
+
+	log.Println(string(bts))
+}
+
+
+func ExampleScrape(url string) {
+	// Request the HTML page.
+	res, err := http.Get(url)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		log.Fatalf("status code error: %d %s", res.StatusCode, res.Status)
+	}
+
+	// Load the HTML document
+	doc, err := goquery.NewDocumentFromReader(res.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Find the review items
+	doc.Find(".left-content article .post-title").Each(func(i int, s *goquery.Selection) {
+		// For each item found, get the title
+		title := s.Find("a").Text()
+		fmt.Printf("Review %d: %s\n", i, title)
+	})
+}
